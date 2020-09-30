@@ -1,65 +1,151 @@
-import Head from 'next/head'
-import styles from '../styles/Home.module.css'
+import { useRef, useEffect, useState } from 'react';
+
+import random from 'canvas-sketch-util/random';
+
+const createGrid = (width, height, gridSize) => {
+  const points = [];
+
+  for (let x = width / gridSize; x < width; x += width / gridSize) {
+    for (let y = width / gridSize; y < height; y += height / gridSize) {
+      points.push([x, y])
+    }
+  }
+
+  return points;
+};
+
+const draw = ({
+  context,
+  strokeStyle = 'black',
+  grid = [],
+  lineTo: [lx, ly]
+}) => {
+  context.strokeStyle = strokeStyle;
+  grid.filter(() => random.gaussian() > 0.5)
+    .forEach(([x, y]) => {
+      context.beginPath();
+      context.moveTo(x, y);
+      context.lineTo(lx, ly);
+      context.stroke();
+    });
+};
+
+const drawRedLines = ({ context, width, height, grid }) => {
+  draw({
+    context,
+    grid,
+    strokeStyle: 'red',
+    lineTo: [0, height / 2]
+  });
+
+  draw({
+    context,
+    grid,
+    strokeStyle: 'red',
+    lineTo: [width, height / 2]
+  });
+
+  draw({
+    context,
+    grid,
+    strokeStyle: 'red',
+    lineTo: [width / 2, 0]
+  });
+
+  draw({
+    context,
+    grid,
+    strokeStyle: 'red',
+    lineTo: [width / 2, height]
+  });
+};
+
+const drawBlueLines = ({ context, width, height, grid }) => {
+  draw({
+    context,
+    grid,
+    strokeStyle: 'blue',
+    lineTo: [0, 0]
+  });
+
+  draw({
+    context,
+    grid,
+    strokeStyle: 'blue',
+    lineTo: [width, 0]
+  });
+
+  draw({
+    context,
+    grid,
+    strokeStyle: 'blue',
+    lineTo: [0, height]
+  });
+
+  draw({
+    context,
+    grid,
+    strokeStyle: 'blue',
+    lineTo: [width, height]
+  });
+};
+
+const drawYellowLines = ({ context, width, height, grid }) => {
+  draw({
+    context,
+    grid,
+    strokeStyle: 'yellow',
+    lineTo: [width / 2, height / 2]
+  });
+};
 
 export default function Home() {
+  const canvasRef = useRef(null);
+  const [seed, setSeed] = useState('');
+  const [lineWidth, setLineWidth] = useState(1);
+  const [gridSize, setGridSize] = useState(3);
+
+  useEffect(() => {
+    random.setSeed(seed);
+
+    const canvas = canvasRef.current;
+    const { width, height } = canvas;
+    const context = canvas.getContext('2d');
+
+    context.fillStyle = 'white';
+    context.fillRect(0, 0, width, height);
+
+    const grid = createGrid(width, height, gridSize);
+    
+    context.lineWidth = lineWidth;
+
+    // Red lines from the midpoints of four sides
+    drawRedLines({ grid, context, width, height });
+
+    // blue lines from four corners,
+    drawBlueLines({ grid, context, width, height });
+
+    // yellow lines from the center
+    drawYellowLines({ grid, context, width, height });
+  }, [seed, lineWidth, gridSize]);
+  
   return (
-    <div className={styles.container}>
-      <Head>
-        <title>Create Next App</title>
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
-
-      <main className={styles.main}>
-        <h1 className={styles.title}>
-          Welcome to <a href="https://nextjs.org">Next.js!</a>
-        </h1>
-
-        <p className={styles.description}>
-          Get started by editing{' '}
-          <code className={styles.code}>pages/index.js</code>
-        </p>
-
-        <div className={styles.grid}>
-          <a href="https://nextjs.org/docs" className={styles.card}>
-            <h3>Documentation &rarr;</h3>
-            <p>Find in-depth information about Next.js features and API.</p>
-          </a>
-
-          <a href="https://nextjs.org/learn" className={styles.card}>
-            <h3>Learn &rarr;</h3>
-            <p>Learn about Next.js in an interactive course with quizzes!</p>
-          </a>
-
-          <a
-            href="https://github.com/vercel/next.js/tree/master/examples"
-            className={styles.card}
-          >
-            <h3>Examples &rarr;</h3>
-            <p>Discover and deploy boilerplate example Next.js projects.</p>
-          </a>
-
-          <a
-            href="https://vercel.com/import?filter=next.js&utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-          >
-            <h3>Deploy &rarr;</h3>
-            <p>
-              Instantly deploy your Next.js site to a public URL with Vercel.
-            </p>
-          </a>
-        </div>
-      </main>
-
-      <footer className={styles.footer}>
-        <a
-          href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Powered by{' '}
-          <img src="/vercel.svg" alt="Vercel Logo" className={styles.logo} />
-        </a>
-      </footer>
+    <div>
+      <label htmlFor="seed">Seed</label>
+      <input id="seed" value={seed} onChange={e => setSeed(e.target.value)} />
+      <br />
+      <label htmlFor="line-width">Line width</label>
+      <input id="line-width" type="range" min="1" max="50" value={lineWidth} onChange={e => setLineWidth(e.target.value)} />
+      <br />
+      <label htmlFor="grid-size">Grid size</label>
+      <input id="grid-size" type="range" min="2" max="50" value={gridSize} onChange={e => setGridSize(e.target.value)} />
+      <br />
+      <canvas
+        className="canvas"
+        width={2048}
+        height={2048}
+        ref={canvasRef}
+      />
     </div>
-  )
+  );
 }

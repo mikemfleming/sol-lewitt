@@ -8,6 +8,8 @@
     "start": "next start"
   },
   "dependencies": {
+    "canvas-sketch": "^0.7.4",
+    "canvas-sketch-util": "^1.10.0",
     "next": "9.5.3",
     "react": "16.13.1",
     "react-dom": "16.13.1"
